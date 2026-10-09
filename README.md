@@ -8,7 +8,7 @@ A mobile-first Bible story app, kept separate from REVEALED.
 
 ## No paid services required
 
-The app is a static HTML/CSS/JavaScript page with no runtime AI API, paid voice service, or third-party JavaScript library. Narration uses the browser/device speech engine when available.
+The app is a static HTML/CSS/JavaScript page with no runtime AI API, paid voice service, or third-party JavaScript library. Narration uses available English browser/device voices. A warm teacher-style preset, saved voice choice, and voice preview are included.
 
 ## Enable the public website
 
