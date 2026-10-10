@@ -167,16 +167,27 @@
       const words=scenes[index].text.trim().split(/\s+/).length;
       stage.style.setProperty('--camera-start',from);
       stage.style.setProperty('--camera-end',to);
-      stage.style.setProperty('--camera-duration',`${Math.max(4,Math.min(9,words/2.8)).toFixed(1)}s`);
+      stage.style.setProperty('--camera-duration',`${Math.max(4,Math.min(14,words/2.3)).toFixed(1)}s`);
       stage.classList.remove('cinematic');
       void stage.offsetWidth;
       stage.classList.add('cinematic');
     }
     function stopCameraMove(){stage.classList.remove('cinematic');}
-    function speak(){if(!voiceOn||!('speechSynthesis'in window))return;startCameraMove(current);window.speechSynthesis.cancel();const u=teacherUtterance(scenes[current].text);u.onstart=()=>setActorsSpeaking(true);u.onend=()=>{setActorsSpeaking(false);if(playing&&current<scenes.length-1)timer=setTimeout(()=>showScene(current+1,true),1100);else if(playing){playing=false;stopCameraMove();playBtn.innerHTML='↻ &nbsp; Watch again';}};u.onerror=()=>{setActorsSpeaking(false);stopCameraMove();voiceStatus.textContent='Transcript available';};window.speechSynthesis.speak(u);}
+    function scenePlaybackMs(index){const words=scenes[index].text.trim().split(/\\s+/).length;return Math.max(4500,Math.min(16000,words/2.2*1000));}
+    function finishScenePlayback(){setActorsSpeaking(false);if(playing&&current<scenes.length-1)timer=setTimeout(()=>showScene(current+1,true),700);else if(playing){playing=false;stopCameraMove();playBtn.innerHTML='↻ &nbsp; Watch again';}}
+    function speak(){
+      startCameraMove(current);
+      if(!voiceOn||!('speechSynthesis'in window)){setActorsSpeaking(false);if(voiceOn)voiceStatus.textContent='Transcript only';if(playing)timer=setTimeout(finishScenePlayback,scenePlaybackMs(current));return;}
+      window.speechSynthesis.cancel();
+      const u=teacherUtterance(scenes[current].text);
+      u.onstart=()=>setActorsSpeaking(true);
+      u.onend=()=>{setActorsSpeaking(false);if(playing)timer=setTimeout(finishScenePlayback,650);};
+      u.onerror=()=>{setActorsSpeaking(false);voiceStatus.textContent='Transcript only';if(playing)timer=setTimeout(finishScenePlayback,scenePlaybackMs(current));};
+      window.speechSynthesis.speak(u);
+    }
     function showScene(index,autoplay=false){if(index<0||index>=scenes.length)return;current=index;const s=scenes[index];stage.dataset.scene=index;speaker.textContent=s.speaker;caption.textContent=s.text;reference.textContent=s.ref;sceneName.textContent=s.title;sceneCount.textContent=`Scene ${index+1} of ${scenes.length}`;progress.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===index));chapterList.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('current',i===index));if('speechSynthesis'in window)window.speechSynthesis.cancel();setActorsSpeaking(false);if(autoplay){speak();playBtn.innerHTML='Ⅱ &nbsp; Pause story';}else{playing=false;clearTimeout(timer);stopCameraMove();playBtn.innerHTML=index===scenes.length-1?'↻ &nbsp; Watch again':'▶ &nbsp; Play story';}}
     scenes.forEach((s,i)=>{const p=document.createElement('button');p.type='button';p.setAttribute('aria-label',`Go to scene ${i+1}: ${s.title}`);p.addEventListener('click',()=>showScene(i));progress.appendChild(p);const c=document.createElement('button');c.className='chapter';c.type='button';c.innerHTML=`<span class="chapter-number">0${i+1}</span><span>${s.title}</span><small>${i===0?'0:00':`${Math.round(i*0.3)}:${String((i*18)%60).padStart(2,'0')}`}</small>`;c.addEventListener('click',()=>{showScene(i);stage.scrollIntoView({behavior:'smooth',block:'center'});});chapterList.appendChild(c);});
-    playBtn.addEventListener('click',()=>{if(!('speechSynthesis'in window)){toastMsg('Narration is not supported here. Read the on-screen transcript.');return;}if(playing){playing=false;clearTimeout(timer);window.speechSynthesis.cancel();setActorsSpeaking(false);stopCameraMove();playBtn.innerHTML='▶ &nbsp; Resume story';}else{playing=true;if(current===scenes.length-1)showScene(0,true);else speak();playBtn.innerHTML='Ⅱ &nbsp; Pause story';}});
+    playBtn.addEventListener('click',()=>{if(!('speechSynthesis'in window)&&voiceOn)toastMsg('Narration is unavailable here. Playing the story with captions and animation.');if(playing){playing=false;clearTimeout(timer);window.speechSynthesis.cancel();setActorsSpeaking(false);stopCameraMove();playBtn.innerHTML='▶ &nbsp; Resume story';}else{playing=true;if(current===scenes.length-1)showScene(0,true);else speak();playBtn.innerHTML='Ⅱ &nbsp; Pause story';}});
     document.getElementById('nextBtn').addEventListener('click',()=>showScene(Math.min(current+1,scenes.length-1)));document.getElementById('backBtn').addEventListener('click',()=>showScene(Math.max(current-1,0)));
     voiceBtn.addEventListener('click',()=>{voiceOn=!voiceOn;voiceBtn.setAttribute('aria-label',voiceOn?'Turn narration off':'Turn narration on');voiceStatus.textContent=voiceOn?'Narration ready':'Narration off';if(!voiceOn&&'speechSynthesis'in window){window.speechSynthesis.cancel();setActorsSpeaking(false);playing=false;stopCameraMove();playBtn.innerHTML='▶ &nbsp; Play story';}});
     document.getElementById('passageBtn').addEventListener('click',()=>window.open('https://www.biblegateway.com/passage/?search=Numbers%2022%3A21-35&version=ESV','_blank','noopener,noreferrer'));
