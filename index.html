@@ -164,7 +164,7 @@
     ];
     function startCameraMove(index){
       const [from,to]=cameraMoves[index]||cameraMoves[0];
-      const words=scenes[index].text.trim().split(/\\s+/).length;
+      const words=scenes[index].text.trim().split(/\s+/).length;
       stage.style.setProperty('--camera-start',from);
       stage.style.setProperty('--camera-end',to);
       stage.style.setProperty('--camera-duration',`${Math.max(4,Math.min(9,words/2.8)).toFixed(1)}s`);
